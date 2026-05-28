@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>BookClub - Книги</title>
+    <style>
+        body { font-family: Arial; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .book { border: 1px solid #ddd; margin: 10px; padding: 10px; border-radius: 5px; }
+        h2 { color: #333; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>📚 BookClub - Каталог книг</h1>
+    <div id="books"></div>
+
+    <script>
+        fetch('http://localhost:8080/api/books')
+            .then(response => response.json())
+            .then(data => {
+                const booksDiv = document.getElementById('books');
+                booksDiv.innerHTML = '';
+                data.content.forEach(book => {
+                    const bookDiv = document.createElement('div');
+                    bookDiv.className = 'book';
+                    bookDiv.innerHTML = `
+                        <h2>${book.title}</h2>
+                        <p><strong>Автор:</strong> ${book.authorName}</p>
+                        <p><strong>Жанры:</strong> ${book.genres}</p>
+                        <p><strong>Описание:</strong> ${book.description || 'Нет описания'}</p>
+                        <p><strong>Статус:</strong> ${book.status}</p>
+                    `;
+                    booksDiv.appendChild(bookDiv);
+                });
+            })
+            .catch(error => {
+                document.getElementById('books').innerHTML = `<p class="error">Ошибка: ${error.message}</p>`;
+            });
+    </script>
+</body>
+</html>

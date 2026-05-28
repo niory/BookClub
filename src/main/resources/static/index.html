@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookClub - Главная</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
+        
+        .header { background: linear-gradient(135deg, #2c3e50, #3498db); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .header h1 { font-size: 1.5rem; cursor: pointer; }
+        .user-section { display: flex; gap: 1rem; align-items: center; }
+        .user-section input { padding: 8px 15px; border: none; border-radius: 20px; outline: none; }
+        .user-section button { padding: 8px 20px; border: 2px solid white; background: transparent; color: white; border-radius: 20px; cursor: pointer; transition: all 0.3s; }
+        .user-section button:hover { background: white; color: #2c3e50; }
+        .user-info { display: flex; gap: 1rem; align-items: center; }
+        .user-info span { color: #ecf0f1; }
+        
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        
+        .tabs { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .tab { padding: 10px 25px; background: white; border: none; border-radius: 25px; cursor: pointer; font-size: 1rem; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tab:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        .tab.active { background: #3498db; color: white; }
+        
+        .search-bar { margin-bottom: 2rem; }
+        .search-bar input { width: 100%; padding: 12px 20px; font-size: 1rem; border: 2px solid #ddd; border-radius: 25px; outline: none; transition: border-color 0.3s; }
+        .search-bar input:focus { border-color: #3498db; }
+        
+        .content { display: none; }
+        .content.active { display: block; }
+        
+        .books-grid, .shelves-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+        
+        .book-card, .shelf-card { background: white; border-radius: 15px; padding: 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; }
+        .book-card:hover, .shelf-card:hover { transform: translateY(-5px); box-shadow: 0 5px 20px rgba(0,0,0,0.15); }
+        
+        .book-title { font-size: 1.2rem; font-weight: bold; color: #2c3e50; margin-bottom: 0.5rem; }
+        .book-author { color: #7f8c8d; font-style: italic; margin-bottom: 0.5rem; }
+        .genre-tag { display: inline-block; background: #3498db; color: white; padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; margin-right: 5px; margin-bottom: 5px; }
+        .book-description { color: #555; line-height: 1.5; font-size: 0.95rem; margin: 1rem 0; }
+        .book-actions { display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap; }
+        .book-actions button { padding: 6px 15px; border: 1px solid #3498db; background: white; color: #3498db; border-radius: 15px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+        .book-actions button:hover { background: #3498db; color: white; }
+        
+        .shelf-card h3 { color: #2c3e50; margin-bottom: 0.5rem; }
+        .shelf-card .shelf-info { color: #7f8c8d; font-size: 0.9rem; }
+        .shelf-card .shelf-books { margin-top: 1rem; }
+        .shelf-card .shelf-book { padding: 0.5rem 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .shelf-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .shelf-actions button { padding: 6px 15px; border: 1px solid #e74c3c; background: white; color: #e74c3c; border-radius: 15px; cursor: pointer; font-size: 0.85rem; }
+        .shelf-actions button:hover { background: #e74c3c; color: white; }
+        
+        .create-shelf { margin-bottom: 2rem; display: flex; gap: 1rem; }
+        .create-shelf input { flex: 1; padding: 10px 15px; border: 2px solid #ddd; border-radius: 25px; outline: none; }
+        .create-shelf button { padding: 10px 25px; background: #27ae60; color: white; border: none; border-radius: 25px; cursor: pointer; }
+        
+        .pagination { margin-top: 2rem; display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap; }
+        .pagination button { padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .pagination button:hover { background: #2980b9; }
+        .pagination button.active-page { background: #2c3e50; }
+        
+        .loading { text-align: center; padding: 3rem; font-size: 1.2rem; color: #7f8c8d; }
+        .error { background: #e74c3c; color: white; padding: 1rem; border-radius: 10px; margin-bottom: 1rem; }
+        
+        .add-to-shelf-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 2rem; border-radius: 15px; max-width: 400px; width: 90%; }
+        .modal-content h3 { margin-bottom: 1rem; }
+        .modal-content select { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 1rem; }
+        .modal-content button { padding: 10px 25px; border: none; border-radius: 25px; cursor: pointer; margin-right: 0.5rem; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-cancel { background: #95a5a6; color: white; }
+
+        .btn-approve { background: #27ae60 !important; color: white !important; border: none !important; }
+        .btn-reject { background: #e74c3c !important; color: white !important; border: none !important; }
+        
+        .article-card { cursor: pointer; }
+        .article-full { line-height: 1.6; color: #444; }
+        .read-more { color: #3498db; font-size: 0.85rem; margin-top: 0.5rem; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 onclick="showTab('catalog')">📚 BookClub</h1>
+        <div class="user-section" id="userSection">
+            <input type="text" id="usernameInput" placeholder="Логин">
+            <input type="password" id="passwordInput" placeholder="Пароль">
+            <button onclick="login()">Войти</button>
+            <button onclick="showRegister()">Регистрация</button>
+        </div>
+        <div class="user-info" id="userInfo" style="display:none;">
+            <span id="userDisplay"></span>
+            <button onclick="logout()">Выйти</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('catalog')">📖 Каталог</button>
+            <button class="tab" onclick="showTab('shelves')">📚 Мои полки</button>
+            <button class="tab" onclick="showTab('articles')">📝 Статьи</button>
+            <button class="tab" id="tabRecommended" onclick="showTab('recommended')" style="display:none;">🎯 Рекомендации</button>
+            <button class="tab" id="tabMyBooks" onclick="showTab('myBooks')" style="display:none;">✍️ Мои книги</button>
+            <button class="tab" id="tabModeration" onclick="showTab('moderation')" style="display:none;">⚡ Модерация</button>
+            <button class="tab" id="tabMyArticles" onclick="showTab('myArticles')" style="display:none;">✍️ Мои статьи</button>
+        </div>
+
+        <div id="catalog" class="content active">
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="🔍 Поиск по названию, автору или жанру..." onkeyup="searchBooks()">
+            </div>
+            <div class="books-grid" id="booksGrid"><div class="loading">Загрузка...</div></div>
+            <div class="pagination" id="pagination"></div>
+        </div>
+
+        <div id="shelves" class="content">
+            <div id="shelvesMessage"></div>
+            <div class="create-shelf">
+                <input type="text" id="newShelfName" placeholder="Название новой полки...">
+                <button onclick="createShelf()">+ Создать полку</button>
+            </div>
+            <div class="shelves-grid" id="shelvesGrid"><div class="loading">Загрузка...</div></div>
+        </div>
+
+        <div id="articles" class="content">
+            <div class="books-grid" id="articlesGrid"><div class="loading">Загрузка...</div></div>
+        </div>
+
+        <div id="recommended" class="content">
+            <div class="books-grid" id="recommendedGrid"><div class="loading">Загрузка...</div></div>
+        </div>
+
+        <div id="myBooks" class="content">
+            <div style="margin-bottom: 2rem;">
+                <button onclick="showAddBookForm()" style="padding: 12px 25px; background: #27ae60; color: white; border: none; border-radius: 25px; cursor: pointer; font-size: 1rem;">+ Добавить книгу</button>
+            </div>
+            <div id="addBookForm" style="display:none; background: white; padding: 2rem; border-radius: 15px; margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h3 style="margin-bottom: 1rem;">Новая книга</h3>
+                <input type="text" id="bookTitle" placeholder="Название" style="width: 100%; padding: 10px; margin-bottom: 1rem; border: 2px solid #ddd; border-radius: 10px;">
+                <input type="text" id="bookAuthor" placeholder="Автор" style="width: 100%; padding: 10px; margin-bottom: 1rem; border: 2px solid #ddd; border-radius: 10px;">
+                <input type="text" id="bookGenres" placeholder="Жанры (через запятую)" style="width: 100%; padding: 10px; margin-bottom: 1rem; border: 2px solid #ddd; border-radius: 10px;">
+                <textarea id="bookDescription" placeholder="Описание" style="width: 100%; padding: 10px; margin-bottom: 1rem; border: 2px solid #ddd; border-radius: 10px; height: 100px;"></textarea>
+                <label id="moderationCheckbox" style="display: block; margin-bottom: 1rem;">
+                    <input type="checkbox" id="submitForModeration"> Отправить на модерацию
+                </label>
+                <button onclick="addBook()" style="padding: 10px 25px; background: #27ae60; color: white; border: none; border-radius: 25px; cursor: pointer;">Сохранить</button>
+                <button onclick="document.getElementById('addBookForm').style.display='none'" style="padding: 10px 25px; background: #95a5a6; color: white; border: none; border-radius: 25px; cursor: pointer;">Отмена</button>
+            </div>
+            <div class="books-grid" id="myBooksGrid"><div class="loading">Загрузка...</div></div>
+        </div>
+
+        <div id="moderation" class="content">
+            <div class="books-grid" id="moderationGrid"><div class="loading">Загрузка...</div></div>
+        </div>
+
+        <div id="myArticles" class="content">
+            <button onclick="showAddArticleForm()" style="padding: 12px 25px; background: #27ae60; color: white; border: none; border-radius: 25px; cursor: pointer; margin-bottom: 1rem;">+ Написать статью</button>
+            <div id="addArticleForm" style="display:none; background: white; padding: 2rem; border-radius: 15px; margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h3 style="margin-bottom: 1rem;">Новая статья</h3>
+                <input type="text" id="articleTitle" placeholder="Заголовок" style="width: 100%; padding: 10px; margin-bottom: 1rem; border: 2px solid #ddd; border-radius: 10px;">
+                <textarea id="articleContent" placeholder="Текст статьи..." style="width: 100%; padding: 10px; margin-bottom: 1rem; border: 2px solid #ddd; border-radius: 10px; height: 200px;"></textarea>
+                <label style="display: block; margin-bottom: 1rem;">
+                    <input type="checkbox" id="publishArticle"> Опубликовать сразу
+                </label>
+                <button onclick="addArticle()" style="padding: 10px 25px; background: #27ae60; color: white; border: none; border-radius: 25px; cursor: pointer;">Сохранить</button>
+                <button onclick="document.getElementById('addArticleForm').style.display='none'" style="padding: 10px 25px; background: #95a5a6; color: white; border: none; border-radius: 25px; cursor: pointer;">Отмена</button>
+            </div>
+            <div class="books-grid" id="myArticlesGrid"><div class="loading">Загрузка...</div></div>
+        </div>
+    </div>
+
+    <div class="add-to-shelf-modal" id="addToShelfModal">
+        <div class="modal-content">
+            <h3>Добавить на полку</h3>
+            <select id="shelfSelect"></select>
+            <button class="btn-primary" onclick="addToShelf()">Добавить</button>
+            <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+        let currentBookId = null;
+
+        if (token) showLoggedIn();
+        loadBooks();
+
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tab === 'catalog') loadBooks();
+            if (tab === 'shelves') loadShelves();
+            if (tab === 'articles') loadArticles();
+            if (tab === 'recommended') loadRecommended();
+            if (tab === 'myBooks') loadMyBooks();
+            if (tab === 'moderation') loadPendingBooks();
+            if (tab === 'myArticles') loadMyArticles();
+        }
+
+        async function login() {
+            const username = document.getElementById('usernameInput').value;
+            const password = document.getElementById('passwordInput').value;
+            try {
+                const res = await fetch('/api/auth/login', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username, password})});
+                if (!res.ok) throw new Error('Login failed');
+                const data = await res.json();
+                token = data.token;
+                currentUser = {username: data.username, role: data.role};
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                showLoggedIn();
+            } catch (e) { alert('Ошибка входа'); }
+        }
+
+        function showRegister() {
+            const username = prompt('Логин:'); if (!username) return;
+            const email = prompt('Email:'); if (!email) return;
+            const password = prompt('Пароль:'); if (!password) return;
+            const role = prompt('Роль (READER, AUTHOR, REVIEWER, MODERATOR):', 'READER');
+            fetch('/api/auth/register', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username, email, password, role})})
+            .then(r => r.json()).then(data => {
+                token = data.token;
+                currentUser = {username: data.username, role: data.role};
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(currentUser));
+                showLoggedIn();
+            }).catch(() => alert('Ошибка регистрации'));
+        }
+
+        function showLoggedIn() {
+            document.getElementById('userSection').style.display = 'none';
+            document.getElementById('userInfo').style.display = 'flex';
+            document.getElementById('userDisplay').textContent = `👤 ${currentUser.username} (${currentUser.role})`;
+            document.getElementById('tabRecommended').style.display = 'inline-block';
+            if (currentUser.role === 'AUTHOR' || currentUser.role === 'MODERATOR') document.getElementById('tabMyBooks').style.display = 'inline-block';
+            if (currentUser.role === 'MODERATOR') document.getElementById('tabModeration').style.display = 'inline-block';
+            if (currentUser.role === 'REVIEWER') document.getElementById('tabMyArticles').style.display = 'inline-block';
+            loadShelves(); loadBooks();
+        }
+
+        function logout() {
+            token = null; currentUser = null; localStorage.clear();
+            document.getElementById('userSection').style.display = 'flex';
+            document.getElementById('userInfo').style.display = 'none';
+            ['tabMyBooks','tabModeration','tabMyArticles','tabRecommended'].forEach(id => document.getElementById(id).style.display = 'none');
+            document.getElementById('booksGrid').innerHTML = '<div class="loading">Войдите для просмотра</div>';
+        }
+
+        function authHeaders() {
+            return token ? {'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json'} : {'Content-Type': 'application/json'};
+        }
+
+        // Каталог
+        async function loadBooks(page = 0, query = '') {
+            if (!token) { document.getElementById('booksGrid').innerHTML = '<div class="loading">Войдите для просмотра каталога</div>'; return; }
+            document.getElementById('booksGrid').innerHTML = '<div class="loading">Загрузка...</div>';
+            try {
+                const url = query ? `/api/books/search?q=${encodeURIComponent(query)}&page=${page}&size=20` : `/api/books?page=${page}&size=20`;
+                const res = await fetch(url, {headers: authHeaders()});
+                const data = await res.json();
+                renderBooks(data.content);
+                renderPagination(data.totalPages, data.number);
+            } catch (e) { document.getElementById('booksGrid').innerHTML = '<div class="loading">Ошибка загрузки</div>'; }
+        }
+
+        function renderBooks(books) {
+            const grid = document.getElementById('booksGrid');
+            if (!books.length) { grid.innerHTML = '<div class="loading">Книги не найдены</div>'; return; }
+            grid.innerHTML = books.map(book => `
+                <div class="book-card">
+                    <div class="book-title">${book.title}</div>
+                    <div class="book-author">${book.authorName}</div>
+                    <div>${book.genres.split(', ').map(g => `<span class="genre-tag">${g}</span>`).join('')}</div>
+                    <div class="book-description">${book.description}</div>
+                    <div class="book-actions"><button onclick="openAddToShelf(${book.id})">📚 На полку</button></div>
+                </div>`).join('');
+        }
+
+        function renderPagination(totalPages, currentPage) {
+            const pag = document.getElementById('pagination');
+            let html = '';
+            for (let i = 0; i < totalPages; i++) html += `<button onclick="loadBooks(${i}, document.getElementById('searchInput').value)" class="${i === currentPage ? 'active-page' : ''}">${i + 1}</button>`;
+            pag.innerHTML = html;
+        }
+
+        function searchBooks() { loadBooks(0, document.getElementById('searchInput').value); }
+
+        // Полки
+        async function loadShelves() {
+            if (!token) return;
+            try {
+                const res = await fetch('/api/shelves', {headers: authHeaders()});
+                const shelves = await res.json();
+                renderShelves(shelves);
+            } catch (e) { document.getElementById('shelvesMessage').innerHTML = '<div class="error">Ошибка загрузки полок</div>'; }
+        }
+
+        function renderShelves(shelves) {
+            const grid = document.getElementById('shelvesGrid');
+            if (!shelves || !shelves.length) {
+                grid.innerHTML = '<div class="loading">У вас пока нет полок</div>';
+                return;
+            }
+            grid.innerHTML = shelves.map(shelf => {
+                const books = shelf.books || [];
+                const sortedBooks = [...books].sort((a, b) => (a.title || '').localeCompare(b.title || '', 'ru'));
+                
+                return `
+                <div class="shelf-card">
+                    <h3 onclick="toggleShelf(this)" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+                        <span>${shelf.favorite ? '⭐ ' : '📁 '}${shelf.name}</span>
+                        <span style="font-size:0.8rem;color:#7f8c8d;">${sortedBooks.length} книг ${sortedBooks.length > 5 ? '▼' : ''}</span>
+                    </h3>
+                    <div class="shelf-books" style="display:${sortedBooks.length > 5 ? 'none' : 'block'};">
+                        ${sortedBooks.map(b => `
+                            <div class="shelf-book" style="display:flex;justify-content:space-between;align-items:center;">
+                                <span>📖 ${b.title} — ${b.authorName}</span>
+                                <button onclick="event.stopPropagation(); removeFromShelf(${shelf.id}, ${b.id})" 
+                                        style="background:none;border:none;cursor:pointer;color:#e74c3c;font-size:1.1rem;">✕</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    ${!shelf.favorite ? `
+                    <div class="shelf-actions">
+                        <button onclick="deleteShelf(${shelf.id})">🗑️ Удалить полку</button>
+                    </div>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function toggleShelf(titleElement) {
+            const card = titleElement.closest('.shelf-card');
+            const booksDiv = card.querySelector('.shelf-books');
+            const arrow = titleElement.querySelector('span:last-child');
+            
+            if (booksDiv.style.display === 'none') {
+                booksDiv.style.display = 'block';
+                if (arrow) arrow.textContent = arrow.textContent.replace('▶', '▼');
+            } else {
+                booksDiv.style.display = 'none';
+                if (arrow) arrow.textContent = arrow.textContent.replace('▼', '▶');
+            }
+        }
+
+        async function createShelf() {
+            const name = document.getElementById('newShelfName').value;
+            if (!name) return;
+            try {
+                const res = await fetch('/api/shelves', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ name })
+                });
+                if (res.ok) {
+                    document.getElementById('newShelfName').value = '';
+                    const shelvesRes = await fetch('/api/shelves', {headers: authHeaders()});
+                    const shelves = await shelvesRes.json();
+                    renderShelves(shelves);
+                }
+            } catch (e) {
+                alert('Ошибка создания полки');
+            }
+        }
+
+        async function deleteShelf(id) {
+            if (!confirm('Удалить полку?')) return;
+            try { await fetch(`/api/shelves/${id}`, {method: 'DELETE', headers: authHeaders()}); loadShelves(); }
+            catch (e) { alert('Ошибка удаления'); }
+        }
+
+        async function removeFromShelf(shelfId, bookId) {
+            try { const res = await fetch(`/api/shelves/${shelfId}/books/${bookId}`, {method: 'DELETE', headers: authHeaders()}); if (res.ok) loadShelves(); }
+            catch (e) { alert('Ошибка удаления книги с полки'); }
+        }
+
+        async function openAddToShelf(bookId) {
+            currentBookId = bookId;
+            try {
+                const res = await fetch('/api/shelves', {headers: authHeaders()});
+                const shelves = await res.json();
+                document.getElementById('shelfSelect').innerHTML = shelves.map(s => `<option value="${s.id}">${s.favorite ? '⭐' : '📁'} ${s.name}</option>`).join('');
+                document.getElementById('addToShelfModal').style.display = 'flex';
+            } catch (e) { alert('Ошибка загрузки полок'); }
+        }
+
+        async function addToShelf() {
+            const shelfId = document.getElementById('shelfSelect').value;
+            try { await fetch(`/api/shelves/${shelfId}/books/${currentBookId}`, {method: 'POST', headers: authHeaders()}); closeModal(); alert('Книга добавлена на полку!'); }
+            catch (e) { alert('Ошибка добавления'); }
+        }
+
+        function closeModal() { document.getElementById('addToShelfModal').style.display = 'none'; }
+
+        // Книги
+        function showAddBookForm() {
+            document.getElementById('addBookForm').style.display = 'block';
+            document.getElementById('moderationCheckbox').style.display = currentUser.role === 'MODERATOR' ? 'none' : 'block';
+        }
+
+        async function addBook() {
+            const title = document.getElementById('bookTitle').value;
+            const authorName = document.getElementById('bookAuthor').value;
+            const genres = document.getElementById('bookGenres').value;
+            const description = document.getElementById('bookDescription').value;
+            const submitForModeration = document.getElementById('submitForModeration').checked;
+            try {
+                const res = await fetch('/api/books', {method: 'POST', headers: authHeaders(), body: JSON.stringify({title, authorName, genres, description, submitForModeration})});
+                if (res.ok) {
+                    document.getElementById('addBookForm').style.display = 'none';
+                    ['bookTitle','bookAuthor','bookGenres','bookDescription'].forEach(id => document.getElementById(id).value = '');
+                    document.getElementById('submitForModeration').checked = false;
+                    loadMyBooks(); alert('Книга добавлена!');
+                }
+            } catch (e) { alert('Ошибка добавления книги'); }
+        }
+
+        async function loadMyBooks() {
+            try {
+                const res = await fetch('/api/books/my', {headers: authHeaders()});
+                const books = await res.json();
+                document.getElementById('myBooksGrid').innerHTML = books.map(book => `
+                    <div class="book-card">
+                        <div class="book-title">${book.title}</div>
+                        <div class="book-author">${book.authorName}</div>
+                        <div>${(book.genres||'').split(', ').map(g => `<span class="genre-tag">${g}</span>`).join('')}</div>
+                        <div class="book-description">${book.description||''}</div>
+                        <div style="margin-top:0.5rem;"><span style="padding:3px 10px;border-radius:15px;font-size:0.85rem;${book.status==='APPROVED'?'background:#27ae60;color:white':book.status==='PENDING'?'background:#f39c12;color:white':book.status==='REJECTED'?'background:#e74c3c;color:white':'background:#95a5a6;color:white'}">${book.status}</span></div>
+                    </div>`).join('');
+            } catch (e) { document.getElementById('myBooksGrid').innerHTML = '<div class="loading">Ошибка загрузки</div>'; }
+        }
+
+        // Модерация
+        async function loadPendingBooks(page = 0) {
+            try {
+                const res = await fetch(`/api/books/pending?page=${page}&size=20`, {headers: authHeaders()});
+                const data = await res.json();
+                const grid = document.getElementById('moderationGrid');
+                if (!data.content.length) { grid.innerHTML = '<div class="loading">Нет книг на модерации</div>'; return; }
+                grid.innerHTML = data.content.map(book => `
+                    <div class="book-card">
+                        <div class="book-title">${book.title}</div>
+                        <div class="book-author">${book.authorName} (добавил: ${book.createdBy})</div>
+                        <div>${book.genres.split(', ').map(g => `<span class="genre-tag">${g}</span>`).join('')}</div>
+                        <div class="book-description">${book.description}</div>
+                        <div class="book-actions" style="margin-top:1rem;">
+                            <button onclick="approveBook(${book.id})" class="btn-approve">✅ Одобрить</button>
+                            <button onclick="rejectBook(${book.id})" class="btn-reject">❌ Отклонить</button>
+                        </div>
+                    </div>`).join('');
+            } catch (e) { document.getElementById('moderationGrid').innerHTML = '<div class="loading">Ошибка загрузки</div>'; }
+        }
+
+        async function approveBook(id) { try { await fetch(`/api/books/${id}/approve`, {method:'PUT', headers:authHeaders()}); loadPendingBooks(); loadBooks(); } catch(e) { alert('Ошибка одобрения'); } }
+        async function rejectBook(id) { try { await fetch(`/api/books/${id}/reject`, {method:'PUT', headers:authHeaders()}); loadPendingBooks(); } catch(e) { alert('Ошибка отклонения'); } }
+
+        // Статьи
+        async function loadArticles() {
+            try {
+                const res = await fetch('/api/articles/published', {headers: authHeaders()});
+                const data = await res.json();
+                const grid = document.getElementById('articlesGrid');
+                if (!data.content || !data.content.length) { grid.innerHTML = '<div class="loading">Статей пока нет</div>'; return; }
+                grid.innerHTML = data.content.map(a => `
+                    <div class="book-card article-card" onclick="toggleArticle(this)">
+                        <div class="book-title">${a.title}</div>
+                        <div class="book-author">Автор: ${a.createdBy}</div>
+                        <div class="article-preview">${a.content.substring(0,200)}...</div>
+                        <div class="article-full" style="display:none;">${a.content}</div>
+                        <div class="read-more">Читать далее...</div>
+                        <div style="color:#7f8c8d;font-size:0.85rem;">👁 ${a.views} просмотров</div>
+                    </div>`).join('');
+            } catch (e) { document.getElementById('articlesGrid').innerHTML = '<div class="loading">Ошибка загрузки</div>'; }
+        }
+
+        function toggleArticle(card) {
+            const preview = card.querySelector('.article-preview');
+            const full = card.querySelector('.article-full');
+            const hint = card.querySelector('.read-more');
+            if (full.style.display === 'none') { preview.style.display = 'none'; full.style.display = 'block'; if(hint) hint.textContent = 'Свернуть'; }
+            else { preview.style.display = 'block'; full.style.display = 'none'; if(hint) hint.textContent = 'Читать далее...'; }
+        }
+
+        function showAddArticleForm() { document.getElementById('addArticleForm').style.display = 'block'; }
+
+        async function addArticle() {
+            const title = document.getElementById('articleTitle').value;
+            const content = document.getElementById('articleContent').value;
+            const publish = document.getElementById('publishArticle').checked;
+            try {
+                const res = await fetch('/api/articles', {method:'POST', headers:authHeaders(), body:JSON.stringify({title, content, publish})});
+                if (res.ok) {
+                    document.getElementById('addArticleForm').style.display = 'none';
+                    document.getElementById('articleTitle').value = '';
+                    document.getElementById('articleContent').value = '';
+                    document.getElementById('publishArticle').checked = false;
+                    loadMyArticles();
+                }
+            } catch (e) { alert('Ошибка сохранения'); }
+        }
+
+        async function loadMyArticles() {
+            const grid = document.getElementById('myArticlesGrid');
+            grid.innerHTML = '<div class="loading">Загрузка...</div>';
+            try {
+                const res = await fetch('/api/articles/my', {headers: authHeaders()});
+                if (!res.ok) { grid.innerHTML = `<div class="error">Ошибка ${res.status}</div>`; return; }
+                const articles = await res.json();
+                if (!articles.length) { grid.innerHTML = '<div class="loading">У вас пока нет статей</div>'; return; }
+                grid.innerHTML = articles.map(a => `
+                    <div class="book-card article-card" onclick="toggleArticle(this)">
+                        <div class="book-title">${a.title}</div>
+                        <div class="article-preview">${a.content.substring(0,200)}...</div>
+                        <div class="article-full" style="display:none;">${a.content}</div>
+                        <div class="read-more">Читать далее...</div>
+                        <div style="margin-top:0.5rem;"><span style="padding:3px 10px;border-radius:15px;font-size:0.85rem;${a.status==='PUBLISHED'?'background:#27ae60;color:white':'background:#f39c12;color:white'}">${a.status}</span></div>
+                        ${a.status==='DRAFT'?`<div class="book-actions" style="margin-top:1rem;" onclick="event.stopPropagation();"><button onclick="submitArticle(${a.id})" style="border-color:#27ae60;color:#27ae60;">📤 Опубликовать</button><button onclick="deleteArticle(${a.id})" style="border-color:#e74c3c;color:#e74c3c;">🗑️ Удалить</button></div>`:''}
+                    </div>`).join('');
+            } catch (e) { grid.innerHTML = `<div class="error">Ошибка: ${e.message}</div>`; }
+        }
+
+        async function submitArticle(id) { if(!confirm('Опубликовать статью?')) return; try { const res = await fetch(`/api/articles/${id}/submit`, {method:'PUT', headers:authHeaders()}); if(res.ok) loadMyArticles(); else alert('Ошибка публикации'); } catch(e) { alert('Ошибка: '+e.message); } }
+        async function deleteArticle(id) { if(!confirm('Удалить черновик?')) return; try { const res = await fetch(`/api/articles/${id}`, {method:'DELETE', headers:authHeaders()}); if(res.ok) loadMyArticles(); else alert('Удалить можно только черновик'); } catch(e) { alert('Ошибка: '+e.message); } }
+
+        // Рекомендации
+        async function loadRecommended() {
+            const grid = document.getElementById('recommendedGrid');
+            grid.innerHTML = '<div class="loading">Анализируем ваши предпочтения...</div>';
+            try {
+                const res = await fetch('/api/books/recommended', {headers: authHeaders()});
+                const books = await res.json();
+                if (!books.length) { grid.innerHTML = '<div class="loading">Добавьте книги в Избранное, чтобы получить рекомендации</div>'; return; }
+                grid.innerHTML = books.map(book => `
+                    <div class="book-card">
+                        <div class="book-title">${book.title}</div>
+                        <div class="book-author">${book.authorName}</div>
+                        <div>${book.genres.split(', ').map(g => `<span class="genre-tag">${g}</span>`).join('')}</div>
+                        <div class="book-description">${book.description}</div>
+                        <div class="book-actions"><button onclick="openAddToShelf(${book.id})">📚 На полку</button></div>
+                    </div>`).join('');
+            } catch (e) { grid.innerHTML = '<div class="loading">Ошибка загрузки</div>'; }
+        }
+    </script>
+</body>
+</html>
