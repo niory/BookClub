@@ -1,11 +1,17 @@
 USE bookclub;
 
--- Если пользователя с id=1 ещё нет, создаём
-INSERT INTO users (id, username, email, password, role) VALUES 
-(1, 'admin', 'admin@bookclub.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ADMIN')
-ON DUPLICATE KEY UPDATE username=username;
+-- Очистим таблицы на случай повторного запуска
+DELETE FROM shelf_books;
+DELETE FROM shelves;
+DELETE FROM books;
+DELETE FROM users;
+DELETE FROM articles;
 
--- Вставляем все 100 книг
+-- Создаём пользователя-автора (роль AUTHOR)
+INSERT INTO users (username, email, password, role, blocked, created_at) VALUES 
+('tanya', 'tanya@example.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'AUTHOR', 0, NOW());
+
+-- 100 книг
 INSERT INTO books (title, author_name, genres, description, status, created_by, created_at) VALUES
 ('1984', 'Джордж Оруэлл', 'антиутопия, политическая проза, классика', 'Роман о тоталитарном государстве, где власть контролирует язык, память и саму реальность.', 'APPROVED', 1, NOW()),
 ('Скотный двор', 'Джордж Оруэлл', 'сатира, антиутопия, классика', 'Аллегорическая история о животных на ферме, превращающаяся в жесткую сатиру на власть и революцию.', 'APPROVED', 1, NOW()),
